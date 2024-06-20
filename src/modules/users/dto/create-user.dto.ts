@@ -1,13 +1,16 @@
 import { IsEmail, IsNotEmpty, IsString, Matches } from "class-validator";
 import { CreateUserDtoInterface } from "../interfaces/create-user.interface";
 import { NAME_REGEX, PASSWORD_REGEX } from "src/common/constants/regex";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class CreateUserDto implements CreateUserDtoInterface {
+    @ApiProperty({ name: 'email', type: 'string', description: 'user email', nullable: false, example: 'test123@test.com' })
     @IsEmail()
     @IsString()
     @IsNotEmpty()
     email: string;
 
+    @ApiProperty({ name: 'username', type: 'string', description: 'The string can only contain Unicode characters, numbers, single quotes, periods, and spaces between the beginning and end.', nullable: false, example: 'test user'})
     @IsString()
     @IsNotEmpty()
     @Matches(NAME_REGEX, {
@@ -15,6 +18,7 @@ export class CreateUserDto implements CreateUserDtoInterface {
     })
     username: string;
 
+    @ApiProperty({ name: 'password', type: 'string', description: 'Must contain at least one number, must contain at least one special character (excluding spaces), and must not contain a (.) or line break (\n) at the beginning of the string. Contains at least one uppercase and one lowercase letter.', nullable: false, example: 'Test123!!@'})
     @IsString()
     @IsNotEmpty()
     @Matches(PASSWORD_REGEX, {
