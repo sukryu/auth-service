@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { UserEntity } from "src/modules/users/entities/user.entity";
-
 @Injectable()
 export class UtilsService {
     private readonly logger = new Logger(UtilsService.name);

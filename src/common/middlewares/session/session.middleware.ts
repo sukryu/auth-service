@@ -16,7 +16,7 @@ export class SessionMiddleware implements NestMiddleware {
 
     session({
       store: new RedisStore({ client: this.redisService.getClient() }),
-      secret: this.configService.get<string>(''),
+      secret: this.configService.get<string>('SESSION_SECRET'),
       resave: false,
       saveUninitialized: false,
       cookie: {
