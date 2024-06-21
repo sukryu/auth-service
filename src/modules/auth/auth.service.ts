@@ -3,7 +3,6 @@ import { UsersService } from "../users/users.service";
 import { TokenService } from "./jwt/jwt.service";
 import { ConfigService } from "@nestjs/config";
 import { EmailLoginDto } from "./dto/email-login.dto";
-import { UtilsService } from "src/common/utils/utils";
 import { JwtPayload } from "./jwt/dto/jwt.payload.dto";
 import { EmailLoginResponseDto } from "./dto/email-login-response.dto";
 import * as bcrypt from 'bcrypt';
@@ -15,7 +14,6 @@ export class AuthService {
         private readonly users: UsersService,
         private readonly token: TokenService,
         private readonly config: ConfigService,
-        private readonly utils: UtilsService,
     ) {}
     
     async login(emailLoginDto: EmailLoginDto): Promise<EmailLoginResponseDto> {
