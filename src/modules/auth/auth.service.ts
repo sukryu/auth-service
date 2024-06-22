@@ -6,6 +6,8 @@ import { EmailLoginDto } from "./dto/email-login.dto";
 import { JwtPayload } from "./jwt/dto/jwt.payload.dto";
 import { EmailLoginResponseDto } from "./dto/email-login-response.dto";
 import * as bcrypt from 'bcrypt';
+import { UserEntity } from "../users/entities/user.entity";
+import { UtilsService } from "src/common/utils/utils";
 
 @Injectable()
 export class AuthService {
@@ -14,17 +16,27 @@ export class AuthService {
         private readonly users: UsersService,
         private readonly token: TokenService,
         private readonly config: ConfigService,
+        private readonly utils: UtilsService,
     ) {}
-    
-    async login(emailLoginDto: EmailLoginDto): Promise<EmailLoginResponseDto> {
-        const user = await this.users.getUserByEmail(emailLoginDto.email);
 
+    async validateUserById(userId: string): Promise<UserEntity> {
+        const user = await this.users.getUserById(userId);
+        await this.utils.handleCommonErrors(user);
+        return user;
+    }
+
+    async validateUser(emailLoginDto: EmailLoginDto): Promise<UserEntity> {
+        const user = await this.users.getUserByEmail(emailLoginDto.email);
+        await this.utils.handleCommonErrors(user);
         const isMatches = await this.comparePassword(user.password, emailLoginDto.password);
         if (!isMatches) {
             this.logger.error(`Invalid credentials`);
             throw new BadRequestException(`Invalid credentials`);
         }
-
+        return user;
+    }
+    
+    async login(user: UserEntity): Promise<EmailLoginResponseDto> {
         const payload: JwtPayload = {
             sub: user.id,
             email: user.email,

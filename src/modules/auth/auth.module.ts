@@ -8,6 +8,9 @@ import { JwtStrategy } from "./strategies/jwt.strategy";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { TokenService } from "./jwt/jwt.service";
 import { AuthController } from "./auth.controller";
+import { LocalStrategy } from "./strategies/local.strategy";
+import { UtilsService } from "src/common/utils/utils";
+import { LocalAuthGuard } from "./guards/local-auth.guard";
 
 @Module({
     imports: [
@@ -28,7 +31,10 @@ import { AuthController } from "./auth.controller";
         AuthService,
         TokenService,
         JwtStrategy,
+        LocalStrategy,
         JwtAuthGuard,
+        LocalAuthGuard,
+        UtilsService,
     ],
     exports: [AuthService],
 })

@@ -7,7 +7,6 @@ import { TypeOrmConfigService } from './database/typeorm-config.service';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { RedisModule } from './modules/redis/redis.module';
 import { UsersModule } from './modules/users/users.module';
-import { SessionMiddleware } from './common/middlewares/session/session.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
@@ -29,8 +28,4 @@ import { AuthModule } from './modules/auth/auth.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {
-  configure(cunsumer: MiddlewareConsumer) {
-    cunsumer.apply(SessionMiddleware).forRoutes('*');
-  }
-}
+export class AppModule {}
