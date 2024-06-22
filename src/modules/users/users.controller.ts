@@ -9,6 +9,7 @@ import {
     Param,
     Patch,
     Post,
+    Query,
     Req,
   } from "@nestjs/common";
   import {
@@ -17,13 +18,17 @@ import {
     ApiNoContentResponse,
     ApiNotFoundResponse,
     ApiOkResponse,
+    ApiOperation,
     ApiParam,
+    ApiQuery,
+    ApiResponse,
     ApiTags,
   } from "@nestjs/swagger";
   import { UsersService } from "./users.service";
   import { UserEntity } from "./entities/user.entity";
   import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
   
   @ApiTags('users')
   @Controller({ version: '1', path: 'users' })
@@ -33,6 +38,14 @@ import { UpdateUserDto } from "./dto/update-user.dto";
     constructor(
       private readonly usersService: UsersService
     ) {}
+
+    @ApiQuery({ name: 'cursor', type: 'string', description: 'encrypted base64 created_At', required: false })
+    @ApiQuery({ name: 'limit', type: 'number', description: 'limit of users number', required: false })
+    @ApiResponse({ status: 200, description: 'Returns paginated users', type: [UserEntity] })
+    @Get('/pagination')
+    async getUsers(@Query() paginationDto: CursorPaginationDto) {
+      return this.usersService.getUsersWithCursorPagination(paginationDto);
+    }
   
     @ApiParam({ name: 'id', description: 'User ID' })
     @ApiOkResponse({ status: HttpStatus.OK, description: 'Successfully fetched user', type: UserEntity })

@@ -28,7 +28,7 @@ export class AuthService {
     async validateUser(emailLoginDto: EmailLoginDto): Promise<UserEntity> {
         const user = await this.users.getUserByEmail(emailLoginDto.email);
         await this.utils.handleCommonErrors(user);
-        const isMatches = await this.comparePassword(user.password, emailLoginDto.password);
+        const isMatches = await this.comparePassword(emailLoginDto.password, user.password);
         if (!isMatches) {
             this.logger.error(`Invalid credentials`);
             throw new BadRequestException(`Invalid credentials`);
@@ -56,7 +56,7 @@ export class AuthService {
         };
     }
 
-    private async comparePassword(password: string, input: string): Promise<boolean> {
-        return bcrypt.compare(password, input);
+    private async comparePassword(input: string, password: string): Promise<boolean> {
+        return await bcrypt.compare(input, password);
     }
 }

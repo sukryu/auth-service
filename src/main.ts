@@ -60,35 +60,41 @@ async function bootstrap() {
 
   // Session
 
+  const configService = app.get(ConfigService);
+  
   const redisClient = new Redis(
-    +process.env.REDIS_PORT,
-    process.env.REDIS_HOST,
-    { password: process.env.REDIS_PASSWORD },
+    +configService.get<number>('REDIS_PORT'),
+    configService.get<string>('REDIS_HOST'),
+    { password: configService.get<string>('REDIS_PASSWORD') },
   );
 
   redisClient.on('error', (err) => {
     Logger.error(err);
   });
   redisClient.on('connect', () => {
-    Logger.log(`Connection to redis establish successfully`);
+    Logger.log(`Connection to redis established successfully`);
   });
+
   const redisStore = new RedisStore({ client: redisClient });
+
   app.use(
     session({
       store: redisStore,
-      name: process.env.REDIS_AUTH_TOKEN_SESSION,
-      secret: process.env.REDIS_SESSION_SECRET,
+      name: configService.get<string>('REDIS_AUTH_TOKEN_SESSION'),
+      secret: configService.get<string>('REDIS_SESSION_SECRET'),
       resave: false,
       saveUninitialized: false,
       cookie: {
         httpOnly: true,
         maxAge: 60000,
-        secure: process.env.NODE_ENV === 'production',
+        secure: configService.get<string>('NODE_ENV') === 'production',
       },
     }),
   );
+
   app.use(passport.initialize());
   app.use(passport.session());
+  // -- Session
 
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('docs', app, document);

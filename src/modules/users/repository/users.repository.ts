@@ -4,6 +4,7 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { UserEntity } from "../entities/user.entity";
 import { Repository } from "typeorm";
 import { CreateUserDto } from "../dto/create-user.dto";
+import { CursorPaginationDto } from "../dto/cursor-pagination.dto";
 
 @Injectable()
 export class UsersRepository implements UserRepositoryInterface {
@@ -15,6 +16,32 @@ export class UsersRepository implements UserRepositoryInterface {
 
     public async getUsers(): Promise<UserEntity[]> {
         return await this.repository.find();
+    }
+
+    public async getUsersWithCursorPagination(paginationDto: CursorPaginationDto): Promise<{ users: UserEntity[], nextCursor: string | null }> {
+        const { cursor, limit } = paginationDto;
+
+        const query = this.repository.createQueryBuilder("user")
+            .orderBy("user.created_At", "DESC")
+            .take(limit + 1);
+
+        if (cursor) {
+            const decodedCursor = Buffer.from(cursor, 'base64').toString('ascii');
+            query.where("user.created_At < :cursor", { cursor: new Date(decodedCursor) });
+        }
+
+        const users = await query.getMany();
+
+        let nextCursor: string | null = null;
+        if (users.length > limit) {
+            const nextCursorUser = users.pop();
+            nextCursor = Buffer.from(nextCursorUser.created_At.toISOString()).toString('base64');
+        }
+
+        return {
+            users,
+            nextCursor,
+        }
     }
 
     public async getUserById(userId: string): Promise<UserEntity> {

@@ -28,10 +28,11 @@ export class TokenService {
     }
 
     private async createToken(payload: JwtPayload, expiresIn: number, secret: string): Promise<string> {
-        const timestamp = Math.floor(Date.now() / 1000);
-        payload.iat = timestamp;
-        payload.exp = timestamp + expiresIn;
-        return await this.jwt.sign(payload, { secret });
+        const options = {
+            expiresIn,
+            secret,
+        };
+        return await this.jwt.sign(payload, options);
     }
 
     public async generateAccessToken(payload: JwtPayload): Promise<string> {

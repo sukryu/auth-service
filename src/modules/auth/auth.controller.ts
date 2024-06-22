@@ -19,7 +19,7 @@ export class AuthController {
     @ApiOkResponse({ status: HttpStatus.OK, description: 'Successfully logged in'})
     @ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid credentials'})
     @Post('login')
-    async login(@Req() req): Promise<EmailLoginResponseDto> {
+    async login(@Req() req, @Body() emailLoginDto: EmailLoginDto): Promise<EmailLoginResponseDto> {
         return await this.authService.login(req.user);
     }
 }

@@ -9,6 +9,7 @@ import { ConfigService } from "@nestjs/config";
 import { plainToClass } from "class-transformer";
 import * as bcrypt from 'bcrypt';
 import { UpdateUserDto } from "./dto/update-user.dto";
+import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
 
 @Injectable()
 export class UsersService implements UserServiceInterface {
@@ -25,6 +26,10 @@ export class UsersService implements UserServiceInterface {
 
     public async getUsers(): Promise<UserEntity[]> {
         return await this.repository.getUsers();
+    }
+
+    public async getUsersWithCursorPagination(paginationDto: CursorPaginationDto): Promise<{ users: UserEntity[], nextCursor: string | null }> {
+        return await this.repository.getUsersWithCursorPagination(paginationDto);
     }
 
     public async getUserById(userId: string): Promise<UserEntity> {
