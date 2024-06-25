@@ -11,6 +11,8 @@ import { AuthController } from "./auth.controller";
 import { LocalStrategy } from "./strategies/local.strategy";
 import { UtilsService } from "src/common/utils/utils";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { RevokedTokenEntity } from "./entities/revoked.entity";
 
 @Module({
     imports: [
@@ -23,6 +25,7 @@ import { LocalAuthGuard } from "./guards/local-auth.guard";
             }),
             inject: [ConfigService],
         }),
+        TypeOrmModule.forFeature([RevokedTokenEntity]),
         UsersModule,
         ConfigModule,
     ],

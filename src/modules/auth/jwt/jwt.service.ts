@@ -2,6 +2,11 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from "./dto/jwt.payload.dto";
+import { JwtRevokeTokenPayloadDto } from "./dto/jwt-revoke-token.payload.dto";
+import { InjectRepository } from "@nestjs/typeorm";
+import { RevokedTokenEntity } from "../entities/revoked.entity";
+import { Repository } from "typeorm";
+import { SaveRevokedTokenDto } from "../dto/save-revoked-token.dto";
 
 @Injectable()
 export class TokenService {
@@ -10,6 +15,8 @@ export class TokenService {
     private readonly refreshTokenSecret: string;
 
     constructor(
+        @InjectRepository(RevokedTokenEntity)
+        private readonly repo: Repository<RevokedTokenEntity>,
         private readonly jwt: JwtService,
         private readonly config: ConfigService,
     ) {
@@ -41,5 +48,34 @@ export class TokenService {
 
     public async generateRefreshToken(payload: JwtPayload): Promise<string> {
         return await this.createToken(payload, 60 * 60 * 24 * 7, this.refreshTokenSecret); // 1 week
+    }
+
+    public async saveRevokedToken(saveRevokedTokenDto: SaveRevokedTokenDto): Promise<RevokedTokenEntity> {
+        if (await this.isTokenRevoked(saveRevokedTokenDto.revoked_token)) {
+            this.logger.error(`This Token already revoked.`);
+            throw new BadRequestException(`This Token already revoked.`);
+        } else {
+            const token = new RevokedTokenEntity({
+                revoked_token: saveRevokedTokenDto.revoked_token,
+                revoked_token_type: saveRevokedTokenDto.revoked_token_type,
+                revoked_reason: saveRevokedTokenDto.revoked_reason,
+                revoked_by_user_id: saveRevokedTokenDto.revoked_by_user_id || 'server',
+                revoked_from_ip: saveRevokedTokenDto.revoked_from_ip || 'server',
+            });
+
+            const revokedToken = await this.repo.create(token);
+            return await this.repo.save(revokedToken);
+        }
+    }
+
+    public async revokeToken(payload: JwtRevokeTokenPayloadDto, saveRevokedTokenDto: SaveRevokedTokenDto): Promise<RevokedTokenEntity> {
+        const { token, tokenType, userId } = payload;
+        
+
+    }
+
+    private async isTokenRevoked(token: string): Promise<boolean> {
+        const found = await this.repo.findOne({ where: { revoked_token: token }});
+        return !!found;
     }
 }

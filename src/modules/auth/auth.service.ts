@@ -56,6 +56,12 @@ export class AuthService {
         };
     }
 
+    async logout(userId: string): Promise<void> {
+        const user = await this.users.getUserById(userId);
+        await this.utils.handleCommonErrors(user);
+        await this.token.
+    }
+
     private async comparePassword(input: string, password: string): Promise<boolean> {
         return await bcrypt.compare(input, password);
     }
