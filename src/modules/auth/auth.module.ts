@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, RequestMethod } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
@@ -13,6 +13,7 @@ import { UtilsService } from "src/common/utils/utils";
 import { LocalAuthGuard } from "./guards/local-auth.guard";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { RevokedTokenEntity } from "./entities/revoked.entity";
+import { RevokeTokenMiddleware } from "src/common/middlewares/revoke-token.middleware";
 
 @Module({
     imports: [
@@ -41,4 +42,14 @@ import { RevokedTokenEntity } from "./entities/revoked.entity";
     ],
     exports: [AuthService],
 })
-export class AuthModule {}
+export class AuthModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(RevokeTokenMiddleware)
+            .forRoutes(
+                { path: 'logout', method: RequestMethod.POST },
+                { path: 'revoke/access-token', method: RequestMethod.POST },
+                { path: 'revoke/refresh-token', method: RequestMethod.POST },
+            )
+    }
+}

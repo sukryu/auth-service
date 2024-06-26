@@ -8,6 +8,8 @@ import { EmailLoginResponseDto } from "./dto/email-login-response.dto";
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from "../users/entities/user.entity";
 import { UtilsService } from "src/common/utils/utils";
+import { JwtRevokeTokenPayloadDto } from "./jwt/dto/jwt-revoke-token.payload.dto";
+import { SaveRevokedTokenDto } from "./dto/save-revoked-token.dto";
 
 @Injectable()
 export class AuthService {
@@ -56,10 +58,18 @@ export class AuthService {
         };
     }
 
-    async logout(userId: string): Promise<void> {
-        const user = await this.users.getUserById(userId);
+    async logout(revokeJwtPayload: JwtRevokeTokenPayloadDto, ip: string): Promise<void> {
+        const user = await this.users.getUserById(revokeJwtPayload.userId);
         await this.utils.handleCommonErrors(user);
-        await this.token.
+
+        const saveRevokedTokenDto: SaveRevokedTokenDto = {
+            revoked_token: revokeJwtPayload.token,
+            revoked_token_type: revokeJwtPayload.tokenType,
+            revoked_reason: 'logout',
+            revoked_by_user_id: revokeJwtPayload.userId,
+            revoked_from_ip: ip,
+        }
+        await this.token.revokeToken(saveRevokedTokenDto);
     }
 
     private async comparePassword(input: string, password: string): Promise<boolean> {

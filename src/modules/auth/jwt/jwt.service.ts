@@ -59,8 +59,8 @@ export class TokenService {
                 revoked_token: saveRevokedTokenDto.revoked_token,
                 revoked_token_type: saveRevokedTokenDto.revoked_token_type,
                 revoked_reason: saveRevokedTokenDto.revoked_reason,
-                revoked_by_user_id: saveRevokedTokenDto.revoked_by_user_id || 'server',
-                revoked_from_ip: saveRevokedTokenDto.revoked_from_ip || 'server',
+                revoked_by_user_id: saveRevokedTokenDto.revoked_by_user_id,
+                revoked_from_ip: saveRevokedTokenDto.revoked_from_ip,
             });
 
             const revokedToken = await this.repo.create(token);
@@ -68,10 +68,8 @@ export class TokenService {
         }
     }
 
-    public async revokeToken(payload: JwtRevokeTokenPayloadDto, saveRevokedTokenDto: SaveRevokedTokenDto): Promise<RevokedTokenEntity> {
-        const { token, tokenType, userId } = payload;
-        
-
+    public async revokeToken(saveRevokedTokenDto: SaveRevokedTokenDto): Promise<RevokedTokenEntity> {
+        return await this.saveRevokedToken(saveRevokedTokenDto);
     }
 
     private async isTokenRevoked(token: string): Promise<boolean> {
