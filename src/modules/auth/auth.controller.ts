@@ -32,13 +32,8 @@ export class AuthController {
     @ApiUnauthorizedResponse({ status: HttpStatus.UNAUTHORIZED, description: 'failed to authorization'})
     @Post('logout')
     async logout(@Req() req) {
-        const token = req['token'];
+        const token = req.headers.authorization?.split(' ')[1];
         const user = req.user;
-
-        await this.logger.debug(`
-            token: ${token}\n
-            userId: ${user.id}\n
-        `)
 
         const payload: JwtRevokeTokenPayloadDto = {
             token,
@@ -54,7 +49,7 @@ export class AuthController {
     @ApiUnauthorizedResponse({ status: HttpStatus.UNAUTHORIZED, description: 'failed to authorization'})
     @Post('/revoke/access-token')
     async revokeAccessToken(@Request() req) {
-        const token = req['token'];
+        const token = req.headers.authorization?.split(' ')[1];
         const user = req.user;
 
         const payload: JwtRevokeTokenPayloadDto = {
@@ -71,7 +66,7 @@ export class AuthController {
     @ApiUnauthorizedResponse({ status: HttpStatus.UNAUTHORIZED, description: 'failed to authorization'})
     @Post('/revoke/refresh-token')
     async revokeRefreshToken(@Request() req) {
-        const token = req['token'];
+        const token = req.headers.authorization?.split(' ')[1];
         const user = req.user;
 
         const payload: JwtRevokeTokenPayloadDto = {
