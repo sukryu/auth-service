@@ -63,14 +63,19 @@ import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
     @ApiParam({ name: 'email', description: 'User Email' })
     @ApiOkResponse({ status: HttpStatus.OK, description: 'Successfully fetched user', type: UserEntity })
     @ApiNotFoundResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
-    @ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid user ID' })
-    @Get()
+    @ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid user email' })
+    @Post('/email')
     async getUserByEmail(@Body('email') email: string): Promise<UserEntity> {
       if (typeof(email) !== 'string') {
         this.logger.error(`Invalid user email: ${email}`);
         throw new BadRequestException('Invalid user email');
       }
-      return await this.usersService.getUserByEmail(email);
+      const user = await this.usersService.getUserByEmail(email);
+      if (user.deleted_At !== null) {
+        throw new BadRequestException(`This account has already been deleted.`);
+      }
+
+      return user;
     }
   
     @ApiCreatedResponse({ status: HttpStatus.CREATED, description: 'Successfully created user', type: UserEntity })

@@ -102,5 +102,8 @@ async function bootstrap() {
   const port = app.get(ConfigService).get('APP_PORT', 9000);
   await app.listen(port, '0.0.0.0');
   Logger.log(`Application is running on : ${await app.getUrl()}`);
+  if (process.env.NODE_ENV === 'development') {
+    Logger.log(`Dev API Docs url: ${await app.getUrl()}/docs#/`);
+  }
 }
 bootstrap();

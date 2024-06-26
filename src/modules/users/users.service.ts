@@ -53,7 +53,8 @@ export class UsersService implements UserServiceInterface {
             throw new UnprocessableEntityException(`Invalid type or input for email: ${email}`);
         }
 
-        return await this.repository.getUserByEmail(email);
+        const user = await this.repository.getUserByEmail(email);
+        return user;
     }
 
     public async setCacheUser(user: UserEntity): Promise<void> {

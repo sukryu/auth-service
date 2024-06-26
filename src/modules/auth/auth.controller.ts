@@ -1,4 +1,4 @@
-import { Body, Controller, HttpStatus, Post, Req, Request, UseGuards } from "@nestjs/common";
+import { Body, Controller, HttpStatus, Logger, Post, Req, Request, UseGuards } from "@nestjs/common";
 import { ApiBadRequestResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { EmailLoginDto } from "./dto/email-login.dto";
@@ -14,6 +14,7 @@ import { RevokeTokenType } from "src/common/enum/revoke_toke-type.enum";
     version: '1',
 })
 export class AuthController {
+    private readonly logger = new Logger(AuthController.name);
     constructor(
         private readonly authService: AuthService,
     ) {}
@@ -30,9 +31,14 @@ export class AuthController {
     @ApiOkResponse({ status: HttpStatus.OK, description: 'Successfully logged out'})
     @ApiUnauthorizedResponse({ status: HttpStatus.UNAUTHORIZED, description: 'failed to authorization'})
     @Post('logout')
-    async logout(@Request() req) {
+    async logout(@Req() req) {
         const token = req['token'];
         const user = req.user;
+
+        await this.logger.debug(`
+            token: ${token}\n
+            userId: ${user.id}\n
+        `)
 
         const payload: JwtRevokeTokenPayloadDto = {
             token,

@@ -49,8 +49,7 @@ export class UsersRepository implements UserRepositoryInterface {
     }
 
     public async getUserByEmail(email: string): Promise<UserEntity> {
-        const user = await this.repository.findOne({ where: { email }});
-        return user;
+        return await this.repository.findOne({ where: { email }});
     }
 
     public async create(createUserDto: CreateUserDto): Promise<UserEntity> {
