@@ -101,7 +101,6 @@ import { APIResponseDto } from "src/common/dto/api-response.dto";
       return {
         status: HttpStatus.CREATED,
         message: 'Successfully created user.',
-        data: user,
       }
     }
 

@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { RoleEntity } from "src/modules/role/entities/role.entity";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, JoinTable, ManyToMany, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 
 @Entity({
     name: 'users'
@@ -23,6 +24,12 @@ export class UserEntity {
     password: string;
 
     // Accounts field
+    @ApiProperty({ name: 'password', type: 'string', description: 'user password & hashing by bcrypt', nullable: false })
+    @Column({ type: 'varchar', nullable: false })
+    p
+    @ManyToMany(() => RoleEntity)
+    @JoinTable()
+    roles: RoleEntity[];
 
     @CreateDateColumn()
     created_At: Date;
