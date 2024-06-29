@@ -1,7 +1,7 @@
 import { EmailLoginResponseInterface } from "../interfaces/email-login-response.interface";
 
 export class EmailLoginResponseDto implements EmailLoginResponseInterface {
-    ok: boolean;
+    status: number;
     message: string;
     data?: any;
 }

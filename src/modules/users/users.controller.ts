@@ -29,6 +29,7 @@ import {
   import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
+import { APIResponseDto } from "src/common/dto/api-response.dto";
   
   @ApiTags('users')
   @Controller({ version: '1', path: 'users' })
@@ -43,8 +44,13 @@ import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
     @ApiQuery({ name: 'limit', type: 'number', description: 'limit of users number', required: false })
     @ApiResponse({ status: 200, description: 'Returns paginated users', type: [UserEntity] })
     @Get('/pagination')
-    async getUsers(@Query() paginationDto: CursorPaginationDto) {
-      return this.usersService.getUsersWithCursorPagination(paginationDto);
+    async getUsers(@Query() paginationDto: CursorPaginationDto): Promise<APIResponseDto> {
+      const users = await this.usersService.getUsersWithCursorPagination(paginationDto);
+      return {
+        status: HttpStatus.OK,
+        message: 'Successfully fetched user.',
+        data: users,
+      };
     }
   
     @ApiParam({ name: 'id', description: 'User ID' })
@@ -52,12 +58,17 @@ import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
     @ApiNotFoundResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
     @ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid user ID' })
     @Get('/:id')
-    async getUserById(@Param('id') id: string): Promise<UserEntity> {
+    async getUserById(@Param('id') id: string): Promise<APIResponseDto> {
       if (typeof(id) !== 'string') {
         this.logger.error(`Invalid user ID: ${id}`);
         throw new BadRequestException('Invalid user ID');
       }
-      return await this.usersService.getUserById(id);
+      const user = await this.usersService.getUserById(id);
+      return {
+        status: HttpStatus.OK,
+        message: 'Successfully fetched user.',
+        data: user,
+      };
     }
 
     @ApiParam({ name: 'email', description: 'User Email' })
@@ -65,7 +76,7 @@ import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
     @ApiNotFoundResponse({ status: HttpStatus.NOT_FOUND, description: 'User not found' })
     @ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid user email' })
     @Post('/email')
-    async getUserByEmail(@Body('email') email: string): Promise<UserEntity> {
+    async getUserByEmail(@Body('email') email: string): Promise<APIResponseDto> {
       if (typeof(email) !== 'string') {
         this.logger.error(`Invalid user email: ${email}`);
         throw new BadRequestException('Invalid user email');
@@ -75,14 +86,23 @@ import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
         throw new BadRequestException(`This account has already been deleted.`);
       }
 
-      return user;
+      return {
+        status: HttpStatus.OK,
+        message: 'Successfully fetched user.',
+        data: user,
+      };
     }
   
     @ApiCreatedResponse({ status: HttpStatus.CREATED, description: 'Successfully created user', type: UserEntity })
     @ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid request data' })
     @Post('/create')
-    async createUser(@Req() req, @Body() createUserDto: CreateUserDto): Promise<UserEntity> {
-      return await this.usersService.create(createUserDto);
+    async createUser(@Req() req, @Body() createUserDto: CreateUserDto): Promise<APIResponseDto> {
+      const user = await this.usersService.create(createUserDto);
+      return {
+        status: HttpStatus.CREATED,
+        message: 'Successfully created user.',
+        data: user,
+      }
     }
 
     @ApiOkResponse({ status: HttpStatus.OK, description: 'Successfully updated user', type: UserEntity })
