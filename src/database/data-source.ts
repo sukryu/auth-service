@@ -14,7 +14,7 @@ export const AppDataSource = new DataSource({
   synchronize: process.env.DATABASE_SYNCHRONIZE === 'false',
   dropSchema: false,
   keepConnectionAlive: true,
-  logging: true,
+  logging: false,
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
   cli: {

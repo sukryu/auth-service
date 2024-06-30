@@ -8,6 +8,7 @@ import { DataSource, DataSourceOptions } from 'typeorm';
 import { RedisModule } from './modules/redis/redis.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { RoleModule } from './modules/role/role.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AuthModule } from './modules/auth/auth.module';
     RedisModule,
     UsersModule,
     AuthModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [AppService],
