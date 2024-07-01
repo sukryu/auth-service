@@ -11,8 +11,9 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import { CursorPaginationDto } from "./dto/cursor-pagination.dto";
 import { RoleService } from "../role/role.service";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DataSource } from "typeorm";
+import { Repository, DataSource, EntityManager } from "typeorm";
 import { Role } from "src/common/enum/role.enum";
+import { RoleEntity } from "../role/entities/role.entity";
 
 @Injectable()
 export class UsersService implements UserServiceInterface {
@@ -147,10 +148,7 @@ export class UsersService implements UserServiceInterface {
             const newUser = await queryRunner.manager.save(UserEntity, user);
 
             // Assign default role (e.g., 'USER')
-            await this.roleService.assignRoleToUser({
-                targetId: newUser.id,
-                roleName: Role.User,
-            }, currentUserId, queryRunner.manager);
+            await this.assignRoleToUser(newUser.id, 'USER', queryRunner.manager);
 
             await queryRunner.commitTransaction();
 
@@ -176,7 +174,7 @@ export class UsersService implements UserServiceInterface {
 
             if (currentUserId && currentUserId !== userId) {
                 const currentUser = await this.getUserById(currentUserId);
-                if (!this.roleService.canAssignRole(currentUser.roles, user.roles[0].name)) {
+                if (!this.roleService.isSuperAdmin(currentUser.roles.map(role => role.name))) {
                     throw new ForbiddenException('You do not have permission to update this user');
                 }
             }
@@ -185,12 +183,9 @@ export class UsersService implements UserServiceInterface {
             if (updateUserDto.username) user.username = updateUserDto.username;
             if (updateUserDto.password) user.password = await this.hashPassword(updateUserDto.password);
 
-            if (updateUserDto.roleName) {
-                for (const roleName of updateUserDto.roleName) {
-                    await this.roleService.assignRoleToUser({
-                        targetId: userId,
-                        roleName
-                    }, currentUserId, queryRunner.manager);
+            if (updateUserDto.roles) {
+                for (const roleName of updateUserDto.roles) {
+                    await this.assignRoleToUser(userId, roleName, queryRunner.manager);
                 }
             }
 
@@ -221,7 +216,7 @@ export class UsersService implements UserServiceInterface {
 
             if (currentUserId && currentUserId !== userId) {
                 const currentUser = await this.getUserById(currentUserId);
-                if (!this.roleService.canAssignRole(currentUser.roles, user.roles[0].name)) {
+                if (!this.roleService.isSuperAdmin(currentUser.roles.map(role => role.name))) {
                     throw new ForbiddenException('You do not have permission to delete this user');
                 }
             }
@@ -255,6 +250,26 @@ export class UsersService implements UserServiceInterface {
         } catch (error) {
             this.logger.error(`Failed to invalidate user cache: ${error.message}`);
             // Don't throw here, just log the error
+        }
+    }
+
+    async assignRoleToUser(userId: string, roleName: string, entityManager?: EntityManager): Promise<void> {
+        const manager = entityManager || this.repository.manager;
+        
+        const user = await manager.findOne(UserEntity, { where: { id: userId }, relations: ['roles'] });
+        if (!user) {
+          throw new NotFoundException(`User with ID ${userId} not found`);
+        }
+    
+        const role = await manager.findOne(RoleEntity, { where: { name: roleName } });
+        if (!role) {
+          throw new NotFoundException(`Role ${roleName} not found`);
+        }
+    
+        user.roles = user.roles || [];
+        if (!user.roles.some(r => r.id === role.id)) {
+          user.roles.push(role);
+          await manager.save(user);
         }
     }
 }

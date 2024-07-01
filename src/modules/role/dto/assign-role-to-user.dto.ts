@@ -4,5 +4,5 @@ import { AssignRoletoUserInterface } from "../interfaces/assign-role-to-user.int
 export class AssignRoleToUserDto implements AssignRoletoUserInterface {
     userId?: string;
     targetId: string;
-    roleName: Role;
+    roleNames: Role[];
 }

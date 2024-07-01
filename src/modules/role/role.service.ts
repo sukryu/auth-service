@@ -1,71 +1,59 @@
-import { ForbiddenException, Inject, Injectable, Logger, NotFoundException, forwardRef } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, ForbiddenException, ConflictException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { RoleEntity } from "./entities/role.entity";
-import { EntityManager, Repository } from "typeorm";
-import { UsersService } from "../users/users.service";
-import { AssignRoleToUserDto } from "./dto/assign-role-to-user.dto";
-import { UserEntity } from "../users/entities/user.entity";
-import { Role } from "src/common/enum/role.enum";
-import { ROLE_HIERARCHY } from "src/common/constants/role-hierarchy.constants";
+import { Repository } from "typeorm";
+import { CreateRoleDto } from "./dto/create-role.dto";
+import { UpdateRoleDto } from "./dto/update-role.dto";
 
 @Injectable()
 export class RoleService {
     private readonly logger = new Logger(RoleService.name);
+
     constructor(
         @InjectRepository(RoleEntity) 
-        private readonly repository: Repository<RoleEntity>,
-        @Inject(forwardRef(() => UsersService))
-        private readonly usersService: UsersService,
+        private readonly repository: Repository<RoleEntity>
     ) {}
 
-    async assignRoleToUser(assignRoleToUserDto: AssignRoleToUserDto, currentUserId?: string, entityManager?: EntityManager): Promise<void> {
-        const repo = entityManager ? entityManager.getRepository(RoleEntity) : this.repository;
-        const userRepo = entityManager ? entityManager.getRepository(UserEntity) : this.usersService.repository;
-
-        try {
-            const targetUser = await userRepo.findOne({ where: { id: assignRoleToUserDto.targetId }, relations: ['roles'] });
-            if (!targetUser) {
-                throw new NotFoundException(`Target user not found.`);
-            }
-
-            const newRole = await repo.findOne({ where: { name: assignRoleToUserDto.roleName }});
-            if (!newRole) {
-                throw new NotFoundException(`Role ${assignRoleToUserDto.roleName} not found`);
-            }
-
-            if (currentUserId && currentUserId !== assignRoleToUserDto.targetId) {
-                const currentUser = await userRepo.findOne({ where: { id: currentUserId }, relations: ['roles'] });
-                if (!currentUser) {
-                    throw new NotFoundException(`Current user not found`);
-                }
-                if (!this.canAssignRole(currentUser.roles, newRole.name)) {
-                    throw new ForbiddenException(`You do not have permission to assign this role`);
-                }
-            }
-
-            if (!targetUser.roles) {
-                targetUser.roles = [];
-            }
-            targetUser.roles.push(newRole);
-            await userRepo.save(targetUser);
-        } catch (error) {
-            this.logger.error(`Failed to assign role to user: ${error.message}`);
-            throw error;
+    async create(createRoleDto: CreateRoleDto, currentUserId: string): Promise<RoleEntity> {
+        const existingRole = await this.repository.findOne({ where: { name: createRoleDto.name } });
+        if (existingRole) {
+            throw new ConflictException(`Role ${createRoleDto.name} already exists`);
         }
+
+        const newRole = this.repository.create({
+            ...createRoleDto,
+            created_By: currentUserId
+        });
+
+        return this.repository.save(newRole);
     }
 
-    canAssignRole(currentUserRoles: RoleEntity[], roleToAssign: Role): boolean {
-        const highestRole = this.getHighestRole(currentUserRoles);
-        return ROLE_HIERARCHY[highestRole]?.includes(roleToAssign) || false;
+    async findAll(): Promise<RoleEntity[]> {
+        return this.repository.find();
     }
 
-    getHighestRole(roles: RoleEntity[]): Role {
-        const roleOrder = [Role.SuperAdmin, Role.Admin, Role.User, Role.Company];
-        for (const role of roleOrder) {
-            if (roles.some(r => r.name === role)) {
-                return role;
-            }
+    async findOne(id: number): Promise<RoleEntity> {
+        const role = await this.repository.findOne({ where: { id } });
+        if (!role) {
+            throw new NotFoundException(`Role with ID ${id} not found`);
         }
-        return Role.User;
+        return role;
+    }
+
+    async update(id: number, updateRoleDto: UpdateRoleDto, currentUserId: string): Promise<RoleEntity> {
+        const role = await this.findOne(id);
+        Object.assign(role, updateRoleDto);
+        role.updated_By = currentUserId;
+        return this.repository.save(role);
+    }
+
+    async remove(id: number, currentUserId: string): Promise<void> {
+        const role = await this.findOne(id);
+        role.deleted_By = currentUserId;
+        await this.repository.softRemove(role);
+    }
+
+    isSuperAdmin(roles: string[]): boolean {
+        return roles.includes('SUPERADMIN');
     }
 }
