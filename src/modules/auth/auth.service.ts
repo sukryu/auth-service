@@ -10,6 +10,8 @@ import { UserEntity } from "../users/entities/user.entity";
 import { UtilsService } from "src/common/utils/utils";
 import { JwtRevokeTokenPayloadDto } from "./jwt/dto/jwt-revoke-token.payload.dto";
 import { SaveRevokedTokenDto } from "./dto/save-revoked-token.dto";
+import { CreateUserDto } from "../users/dto/create-user.dto";
+import { UpdateUserDto } from "../users/dto/update-user.dto";
 
 @Injectable()
 export class AuthService {
@@ -113,5 +115,42 @@ export class AuthService {
         } catch (error) {
             throw new UnauthorizedException('Invalid refresh token');
         }
+    }
+
+    async register(createUserDto: CreateUserDto): Promise<UserEntity> {
+        const existingUser = await this.users.getUserByEmail(createUserDto.email);
+        if (existingUser) {
+            throw new BadRequestException('User with this email already exists');
+        }
+
+        const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+        const newUser = await this.users.create({
+            ...createUserDto,
+            password: hashedPassword,
+        });
+
+        return newUser;
+    }
+
+    async updateUser(userId: string, updateData: UpdateUserDto): Promise<UserEntity> {
+        const user = await this.users.getUserById(userId);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        if (updateData.password) {
+            updateData.password = await bcrypt.hash(updateData.password, 10);
+        }
+
+        return this.users.update(userId, updateData);
+    }
+
+    async deleteUser(userId: string): Promise<void> {
+        const user = await this.users.getUserById(userId);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        await this.users.delete(userId);
     }
 }

@@ -9,6 +9,7 @@ import { RedisModule } from './modules/redis/redis.module';
 import { UsersModule } from './modules/users/users.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { RoleModule } from './modules/role/role.module';
+import { SeedModule } from './database/seed/seed.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { RoleModule } from './modules/role/role.module';
     UsersModule,
     AuthModule,
     RoleModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

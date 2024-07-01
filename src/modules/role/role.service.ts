@@ -4,6 +4,7 @@ import { RoleEntity } from "./entities/role.entity";
 import { Repository } from "typeorm";
 import { CreateRoleDto } from "./dto/create-role.dto";
 import { UpdateRoleDto } from "./dto/update-role.dto";
+import { UserEntity } from "../users/entities/user.entity";
 
 @Injectable()
 export class RoleService {
@@ -11,7 +12,9 @@ export class RoleService {
 
     constructor(
         @InjectRepository(RoleEntity) 
-        private readonly repository: Repository<RoleEntity>
+        private readonly repository: Repository<RoleEntity>,
+        @InjectRepository(UserEntity)
+        private readonly userRepository: Repository<UserEntity>,
     ) {}
 
     async create(createRoleDto: CreateRoleDto, currentUserId: string): Promise<RoleEntity> {
@@ -38,6 +41,19 @@ export class RoleService {
             throw new NotFoundException(`Role with ID ${id} not found`);
         }
         return role;
+    }
+
+    async getUserRoles(userId: string): Promise<string[]> {
+        const user = await this.userRepository.findOne({
+            where: { id: userId },
+            relations: ['roles']
+        });
+
+        if (!user) {
+            throw new NotFoundException(`User with ID ${userId} not found`);
+        }
+
+        return user.roles.map(role => role.name);
     }
 
     async update(id: number, updateRoleDto: UpdateRoleDto, currentUserId: string): Promise<RoleEntity> {

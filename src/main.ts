@@ -15,6 +15,7 @@ import RedisStore from 'connect-redis';
 import * as session from 'express-session';
 import * as passport from 'passport';
 import * as cookieParser from 'cookie-parser';
+import { SeedService } from './database/seed/seed.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -105,6 +106,9 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('docs', app, document);
+
+  const seedService = app.get(SeedService);
+  await seedService.seed();
 
   const port = app.get(ConfigService).get('APP_PORT', 9000);
   await app.listen(port, '0.0.0.0');

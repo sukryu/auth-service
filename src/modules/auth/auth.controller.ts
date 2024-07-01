@@ -1,5 +1,5 @@
-import { Body, Controller, Get, HttpStatus, Logger, Post, Req, Res, UseGuards } from "@nestjs/common";
-import { ApiBadRequestResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
+import { Body, Controller, Delete, Get, HttpStatus, Logger, Patch, Post, Req, Res, UseGuards } from "@nestjs/common";
+import { ApiBadRequestResponse, ApiCreatedResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from "@nestjs/swagger";
 import { AuthService } from "./auth.service";
 import { EmailLoginDto } from "./dto/email-login.dto";
 import { EmailLoginResponseDto } from "./dto/email-login-response.dto";
@@ -8,6 +8,10 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { RevokeTokenType } from "src/common/enum/revoke_toke-type.enum";
 import { APIResponseDto } from "src/common/dto/api-response.dto";
 import { Request, Response } from "express";
+import { CreateUserDto } from "../users/dto/create-user.dto";
+import { UpdateUserDto } from "../users/dto/update-user.dto";
+import { UsersService } from "../users/users.service";
+import { RoleService } from "../role/role.service";
 
 @ApiTags('auth')
 @Controller({
@@ -18,18 +22,62 @@ export class AuthController {
     private readonly logger = new Logger(AuthController.name);
     constructor(
         private readonly authService: AuthService,
+        private readonly usersService: UsersService,
+        private readonly roleService: RoleService,
     ) {}
 
+    @ApiCreatedResponse({ status: HttpStatus.CREATED, description: 'User successfully registered' })
+    @ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
+    @Post('register')
+    async register(@Body() createUserDto: CreateUserDto): Promise<APIResponseDto> {
+        const user = await this.authService.register(createUserDto);
+        return {
+            status: HttpStatus.CREATED,
+            message: 'User successfully registered',
+            data: { user }
+        };
+    }
+
     @UseGuards(JwtAuthGuard)
-    @ApiOkResponse({ status: HttpStatus.OK, description: `Successfully validate user.`})
-    @ApiUnauthorizedResponse({ status: HttpStatus.UNAUTHORIZED, description: `Failed to authorization about accessToken`})
-    @Post('me')
-    async me(@Req() req): Promise<APIResponseDto> {
+    @ApiOkResponse({ status: HttpStatus.OK, description: 'User successfully updated' })
+    @ApiBadRequestResponse({ status: HttpStatus.BAD_REQUEST, description: 'Invalid input data' })
+    @Patch('update-profile')
+    async updateProfile(@Req() req, @Body() updateUserDto: UpdateUserDto): Promise<APIResponseDto> {
+        const updatedUser = await this.authService.updateUser(req.user.id, updateUserDto);
         return {
             status: HttpStatus.OK,
-            message: 'Success',
-            data: req.user,
+            message: 'User successfully updated',
+            data: { user: updatedUser }
         };
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiOkResponse({ status: HttpStatus.OK, description: 'User successfully deleted' })
+    @Delete('delete-account')
+    async deleteAccount(@Req() req): Promise<APIResponseDto> {
+        await this.authService.deleteUser(req.user.id);
+        return {
+            status: HttpStatus.OK,
+            message: 'User successfully deleted'
+        };
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @ApiOkResponse({ status: HttpStatus.OK, description: 'User profile fetched successfully' })
+    @Get('profile')
+    @UseGuards(JwtAuthGuard)
+    async getUserProfile(@Req() req): Promise<APIResponseDto> {
+    const user = await this.usersService.getUserById(req.user.id);
+    const userWithRoles = {
+        ...user,
+        roles: await this.roleService.getUserRoles(user.id)
+    };
+    
+    return {
+        status: HttpStatus.OK,
+        message: 'User profile fetched successfully',
+        data: { user: userWithRoles }
+    };
     }
 
     @UseGuards(LocalAuthGuard)
